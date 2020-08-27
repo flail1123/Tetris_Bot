@@ -1,13 +1,18 @@
 from block import Block
 
 
+def correctPosition(position):
+    # y coordinate can be negative (at first position after rotation often is, but block can't go up)
+    return 0 <= position[0] < 10 and position[1] < 18
+
+
 def positionInsideMap(position):
     return 0 <= position[0] < 10 and 0 <= position[1] < 18
 
 
 def blockPossibleInPosition(block, position, map):
     for (x, y) in block.currentComponentParts():
-        if not (positionInsideMap((position[0] + x, position[1] + y))) or map[position[0] + x][position[1] + y] == 1:
+        if not (correctPosition((position[0] + x, position[1] + y))) or map[position[0] + x][position[1] + y] == 1 or position[0] + x == 9:
             return False
     return True
 
@@ -16,11 +21,11 @@ def dfs(position, block, visited, gradesFromCurrentBlock, map):
     visited[position[0]][position[1]] = True
     for (x, y) in block.currentComponentParts():
         gradesFromCurrentBlock[position[0] + x][position[1] + y] = 1
-    directions = [(1, 0), (0, -1), (-1, 0), (0, 1)]
+    directions = [(1, 0), (-1, 0), (0, 1)]  # bloc can go down, left or right
     for direction in directions:
-        if positionInsideMap((position[0] + direction[0], position[1] + direction[1])) and \
-                not visited[position[0] + direction[0]][position[1] + direction[1]] and blockPossibleInPosition(block, (position[0] + direction[0], position[1] + direction[1]), map):
-            dfs((position[0] + direction[0], position[1] + direction[1]), block, visited, gradesFromCurrentBlock, map)
+        newPosition = (position[0] + direction[0], position[1] + direction[1])
+        if positionInsideMap(newPosition) and not visited[newPosition[0]][newPosition[1]] and blockPossibleInPosition(block, newPosition, map):
+            dfs(newPosition, block, visited, gradesFromCurrentBlock, map)
 
 
 def printMap(map):
@@ -36,24 +41,24 @@ class GameMap:
         grades = [[0 for j in range(18)] for i in range(10)]
         # test every block
         for i in range(1, 8):
-            print('number:', i)
+            #print('number:', i)
             block = Block(i)
             # and every rotation
             for rotation in block.rotations():
-                print('rotation: ', rotation)
+                #print('rotation: ', rotation)
                 block.currentRotation = rotation
                 visited = [[False for j in range(18)] for i in range(10)]
                 gradesFromCurrentBlock = [[0 for j in range(18)] for i in range(10)]
-                dfs((block.firstPosition()[0], block.firstPosition()[1] + 1), block, visited, gradesFromCurrentBlock, self.__map)
+                dfs((block.position()), block, visited, gradesFromCurrentBlock, self.__map)
                 # add grades from this block to grades
                 for x in range(10):
                     for y in range(18):
                         grades[x][y] += gradesFromCurrentBlock[x][y]
-                printMap(gradesFromCurrentBlock)
-                printMap(visited)
-                print("------------------")
-            print('++++++++++++++++++++++++++++')
-        printMap(grades)
+                #printMap(gradesFromCurrentBlock)
+                #printMap(visited)
+                #print("------------------")
+            #print('++++++++++++++++++++++++++++')
+        #printMap(grades)
         sumOfGrades = 0
         numberOfFields = 0
         for x in range(10):
@@ -66,7 +71,7 @@ class GameMap:
                         sumOfGrades += grades[x][y]
                     numberOfFields += 1
         self.__grade = sumOfGrades / numberOfFields
-        print(90 * "*")
+        #print(90 * "*")
 
     def __init__(self, oldGameMap=None):
         self.__map = [[0 for j in range(18)] for i in range(10)]
@@ -89,6 +94,7 @@ class GameMap:
         return self.__map
 
     def calculateWhere2s(self):
+        # erase old 2s
         for x in range(9):  # last column isn't interesting
             for y in range(18):
                 if self.__map[x][y] == 2:
@@ -127,11 +133,11 @@ class GameMap:
         for (x, y) in block.currentComponentParts():
             if positionInsideMap((position[0] + x, position[1] + y)):
                 self.__map[position[0] + x][position[1] + y] = 1
-        print(self)
+        #print(self)
         self.clearFullLines()
-        print(self)
+        #print(self)
         self.calculateWhere2s()
-        print(self)
+        #print(self)
 
         self.calculateGrade()
 
@@ -143,20 +149,18 @@ class GameMap:
             string += '\n'
         return string
 
-
+'''
+for i in range(1, 8):
+    block = Block(i)
+    for rotation in block.rotations():
+        block.currentRotation = rotation
+        gameMap = GameMap()
+        gameMap.addBlock(block, block.position())
+        print(gameMap)
+        print(gameMap.grade())
+        print('8'*80)
+block = Block(5)
 gameMap = GameMap()
-block = Block(1)
 gameMap.addBlock(block, (0, 17))
-gameMap.addBlock(block, (4, 17))
-gameMap.addBlock(block, (0, 16))
-gameMap.addBlock(block, (4, 16))
-gameMap.addBlock(block, (0, 15))
-gameMap.addBlock(block, (4, 15))
-gameMap.addBlock(block, (0, 14))
-gameMap.addBlock(block, (4, 14))
-block.currentRotation = 90
-gameMap.addBlock(block, (8, 14))
-
-
-print(gameMap)
-print(gameMap.grade())
+print(gameMap, gameMap.grade())
+'''
