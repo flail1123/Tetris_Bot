@@ -5,27 +5,17 @@ from PIL import Image
 from block import Block
 from game_map import GameMap
 from calculate_position import calculatePosition, GameOver
-
-def startGame(level):
-    webbrowser.open('https://www.freetetris.org/game.php')
-    # waite until game starts
-    while gui.locateOnScreen('play_game.png') == None:
-        time.sleep(1)
-    # fix the level
-    left, top, width, height = gui.locateOnScreen('level.png')
-    for i in range(level - 1):
-        gui.click(left + width // 2, top + height // 2)
-    # start game
-    left, top, width, height = gui.locateOnScreen('play_game.png')
-    gui.click(left + width // 2, top + height // 2)
+from put_block_in_position import putBlockInPosition
 
 
-# returns a number from 1 to 7, that represents certain kind of block(pictures in working folder describes which number is what)
-# if no block is found exception is raised
+class NoBlockHasBeenFound(Exception):
+    pass
+
+
+# returns a number from 1 to 7, that represents certain kind of block(pictures in working folder describes which
+# number is what) if no block is found exception is raised
 def whichBlockIsNext():
-    print('looking...')
     screenShot = gui.screenshot()
-    print(screenShot.getpixel((1109, 291)))
     (a, b, c) = screenShot.getpixel((1109, 291))
     if (a, b, c) == (245, 112, 0):
         return 1
@@ -42,26 +32,69 @@ def whichBlockIsNext():
     if (a, b, c) == (247, 36, 0):
         return 7
 
-    raise Exception('No block has been found')
+    raise NoBlockHasBeenFound
 
 
-def play():
+def startGame():
+    webbrowser.open('https://www.freetetris.org/game.php')
+
+    # waite until game starts
+    while gui.locateOnScreen('play_game.png') is None:
+        time.sleep(1)
+    # fix the level
+    left, top, width, height = gui.locateOnScreen('level.png')
+    for i in range(level - 1):
+        gui.click(left + width // 2, top + height // 2)
+    # start game
+    left, top, width, height = gui.locateOnScreen('play_game.png')
+    gui.click(left + width // 2, top + height // 2)
+
+
+timesForBlocksToFallOneFieldDependingOnLevel = [0, 8.85 / 16]
+
+
+def play(level):
+    timeForBlockToFallOneField = timesForBlocksToFallOneFieldDependingOnLevel[level]
     gameMap = GameMap()
-    currentBlock = None
+    # tries finding what is the first block
+    while True:
+        try:
+            currentBlock = Block(whichBlockIsNext())
+            break
+        except NoBlockHasBeenFound:
+            pass
+    time.sleep(1.8)
+    # game has started
+    print("game started")
+    currentTime = time.time()
+    gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
     nextBlock = Block(whichBlockIsNext())
-    # wait for the first block
-    while nextBlock.number() == whichBlockIsNext():
-        time.sleep(0.1)
-    while True:  # I didn't lose
+    howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField)
+    nr = 0
+    print('done', nr)
+    time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime) )
+    print(gameMap)
+    while True:
+        nr += 1
+        print("start", nr, nextBlock.number())
+        currentTime = time.time()
         currentBlock = nextBlock
         nextBlock = Block(whichBlockIsNext())
         try:
-            gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)  # calculates where and how to put block
+            # calculates where and how to put block
+            gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
         except GameOver:
             break
-        putBlockInPossition(place)  # it puts block in the position in game
+        # puts block in the position in the game
+        howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField)
+        time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime) )
+        print('done', nr)
+        print(gameMap)
+
     print('Game Over!')
 
-level = int(input('Level: '))
-startGame(level)
-play()
+
+# level = int(input('Level: '))
+level = 1
+startGame()
+play(level)

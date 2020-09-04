@@ -1,5 +1,7 @@
 from game_map import GameMap, positionInsideMap, blockPossibleInPosition
 from block import Block
+from queue import Queue
+
 
 class GameOver(Exception):
     pass
@@ -31,38 +33,57 @@ def isTetrisPossible(gameMap, block):
     return True
 
 
-def dfs(position, block, visited, mapOfListsOfMoves, map, currentListOfMoves):
-    visited[position[0]][position[1]] = True
-    directions = [((0, 1), 'd'), ((1, 0), 'r'), ((-1, 0), 'l')]  # bloc can go 'down', 'left' or 'right'
-    for (direction, letter) in directions:
-        newPosition = (position[0] + direction[0], position[1] + direction[1])
-        currentListOfMoves.append(letter)
-        if positionInsideMap(newPosition) and not visited[newPosition[0]][newPosition[1]] and blockPossibleInPosition(
-                block, newPosition, map):
-            # if it is possible to put block in this position list of moves have to be saved
-            if newPosition[1] == 17 or not blockPossibleInPosition(block, (newPosition[0], newPosition[1] + 1), map):
-                mapOfListsOfMoves[newPosition[0]][newPosition[1]] = currentListOfMoves.copy()
-            dfs(newPosition, block, visited, mapOfListsOfMoves, map, currentListOfMoves)
-        currentListOfMoves.pop()
+def bfs(position, block, mapOfWhoFoundMe, map):
+    #print('|||||||||||||||||||||||||||||')
+    queue = Queue()
+    queue.put(position)
+    directions = [((1, 0), 'r'), ((-1, 0), 'l'), ((0, 1), 'd')]  # bloc can go 'down', 'left' or 'right'
+    while not queue.empty():
+        position = queue.get()
+        #print(position)
+        for (direction, letter) in directions:
+            newPosition = (position[0] + direction[0], position[1] + direction[1])
+            if positionInsideMap(newPosition) and mapOfWhoFoundMe[newPosition[0]][newPosition[1]] == '' and \
+                    blockPossibleInPosition(block, newPosition, map):
+                mapOfWhoFoundMe[newPosition[0]][newPosition[1]] = letter
+                queue.put(newPosition)
+        #print("------")
+    #print("++++++++++++++++++++++")
+
+
+def dfs(position, mapOfWhoFoundMe):
+    letter = mapOfWhoFoundMe[position[0]][position[1]]
+    if letter == 's':
+        return []
+    elif letter == 'l':
+        return dfs((position[0] + 1, position[1]), mapOfWhoFoundMe) + [letter]
+    elif letter == 'r':
+        return dfs((position[0] - 1, position[1]), mapOfWhoFoundMe) + [letter]
+    elif letter == 'd':
+        return dfs((position[0], position[1] - 1), mapOfWhoFoundMe) + [letter]
+
 
 def findPossiblePlacesForBlock(gameMap, block):
-    visited = [[False for j in range(18)] for i in range(10)]
-    # in each field there is going to be list of moves that can get block there
-    mapOfListsOfMoves = [[[] for j in range(18)] for i in range(10)]
-    if block.currentRotation == 0:
-        currentListOfMoves = []
-    elif block.currentRotation == 90:
-        currentListOfMoves = ['u']
-    elif block.currentRotation == 180:
-        currentListOfMoves = ['u', 'u']
-    elif block.currentRotation == 270:
-        currentListOfMoves = ['u', 'u', 'u']
-    dfs(block.position(), block, visited, mapOfListsOfMoves, gameMap.map(), currentListOfMoves)
+    # in each field there are coordinates of field that dfs came from to this field
+    mapOfWhoFoundMe = [['' for j in range(18)] for i in range(10)]
+    mapOfWhoFoundMe[block.position()[0]][block.position()[1]] = 's'  # that indicates that it is starting field
+    bfs((block.position()[0], block.position()[1]), block, mapOfWhoFoundMe, gameMap.map())
+    #print(mapOfWhoFoundMe)
     result = []
+    if block.currentRotation == 0:
+        firstMoves = []
+    elif block.currentRotation == 90:
+        firstMoves = ['u']
+    elif block.currentRotation == 180:
+        firstMoves = ['u', 'u']
+    elif block.currentRotation == 270:
+        firstMoves = ['u', 'u', 'u']
     for x in range(10):
         for y in range(18):
-            if mapOfListsOfMoves[x][y]:
-                result.append(((x, y), mapOfListsOfMoves[x][y]))
+            if mapOfWhoFoundMe[x][y] != '' and (y == 17 or not blockPossibleInPosition(block, (x, y + 1), gameMap.map())):
+                # if it is possible to put block in this position list of moves have to be saved
+                #print(((x, y), dfs((x, y), mapOfWhoFoundMe)))
+                result.append(((x, y), firstMoves + dfs((x, y), mapOfWhoFoundMe)))
     return result
 
 
@@ -80,6 +101,7 @@ def calculatePositionKnowingRotation(gameMap, block):
     for (place, listOfMoves) in listOfPossiblePlacesForBlockWithMoves:
         newGameMap = GameMap(oldGameMap=gameMap)
         newGameMap.addBlock(block, place)
+        #print(newGameMap, newGameMap.grade())
         results.append((newGameMap, listOfMoves, place))
     if not results:
         raise NoPlaceFound
@@ -103,19 +125,24 @@ def calculatePosition(gameMap, block):
     listOfResults.sort(key=sortByGameMapGrade)
     return listOfResults[-1]
 
+
+'''
 gameMap = GameMap()
 block = Block(2)
 gameMap, listOfSteps, place = calculatePosition(gameMap, block)
 print(gameMap, listOfSteps, place)
+
+print("|||||||||||||||||||||||||||||||||||||||| ")
 block = Block(4)
-gameMap, listOfSteps, place = calculatePosition(gameMap, block)
+gameMap, listOfSteps, place = calculatePosition(gameMap, block, 1)
 print(gameMap, listOfSteps, place)
 block = Block(4)
-gameMap, listOfSteps, place = calculatePosition(gameMap, block)
+gameMap, listOfSteps, place = calculatePosition(gameMap, block, 1)
 print(gameMap, listOfSteps, place)
 block = Block(4)
-gameMap, listOfSteps, place = calculatePosition(gameMap, block)
+gameMap, listOfSteps, place = calculatePosition(gameMap, block, 0)
 print(gameMap, listOfSteps, place)
 block = Block(7)
-gameMap, listOfSteps, place = calculatePosition(gameMap, block)
+gameMap, listOfSteps, place = calculatePosition(gameMap, block, 0)
 print(gameMap, listOfSteps, place)
+'''
