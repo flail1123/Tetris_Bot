@@ -123,6 +123,12 @@ def calculatePosition(gameMap, block):
     if not listOfResults:
         raise GameOver
     listOfResults.sort(key=sortByGameMapGrade)
+    gameMap, listOfSteps, place = listOfResults[-1]
+    # change rotation of block
+    block.currentRotation = 0
+    for step in listOfSteps:
+        if step == 'u':
+            block.currentRotation += 90
     return listOfResults[-1]
 
 

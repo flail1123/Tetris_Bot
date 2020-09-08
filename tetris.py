@@ -1,5 +1,6 @@
 import webbrowser
 import time
+import threading
 import pyautogui as gui
 from PIL import Image
 from block import Block
@@ -52,8 +53,18 @@ def startGame():
 
 timesForBlocksToFallOneFieldDependingOnLevel = [0, 8.85 / 16]
 
+nextBlock = None
+
+
+def determineNextBlock():
+    global nextBlock
+    time.sleep(0.7)
+    nextBlock = Block(whichBlockIsNext())
+    print("next block: ", nextBlock.number())
+
 
 def play(level):
+    global nextBlock
     timeForBlockToFallOneField = timesForBlocksToFallOneFieldDependingOnLevel[level]
     gameMap = GameMap()
     # tries finding what is the first block
@@ -68,26 +79,34 @@ def play(level):
     print("game started")
     currentTime = time.time()
     gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
-    nextBlock = Block(whichBlockIsNext())
-    howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField)
+    determineNextBlock()
+    howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock)
     nr = 0
     print('done', nr)
-    time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime) )
+    time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime))
     print(gameMap)
     while True:
         nr += 1
         print("start", nr, nextBlock.number())
         currentTime = time.time()
         currentBlock = nextBlock
-        nextBlock = Block(whichBlockIsNext())
+        threadObj = threading.Thread(target=determineNextBlock)
+        threadObj.start()
         try:
             # calculates where and how to put block
             gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
         except GameOver:
             break
+        time.sleep(0.3)
+        if currentBlock.number() == 7:
+            time.sleep(0.3)
+        print(currentBlock.currentRotation)
         # puts block in the position in the game
-        howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField)
-        time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime) )
+        howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock)
+        timeToSleep = (timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime)
+        if timeToSleep > 0:
+            time.sleep(timeToSleep)
+        threadObj.join()
         print('done', nr)
         print(gameMap)
 

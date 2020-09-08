@@ -1,5 +1,6 @@
 import pyautogui as gui
 import time
+from game_map import blockPossibleInPosition
 
 
 def letterToKeyName(letter):
@@ -13,19 +14,39 @@ def letterToKeyName(letter):
         return 'right'
 
 
-def putBlockInPosition(listOfSteps, timeSinceBlockOccured, timeForBlockToFallOneField):
+def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOneField, gameMap, block):
     print("start")
+    position = block.position()
     howManyDownsShouldBe = 0
     for key in [letterToKeyName(letter) for letter in listOfSteps]:
-        howManyDownsAre = (time.time() - timeSinceBlockOccured) / timeForBlockToFallOneField
+        howManyDownsAre = (time.time() - timeSinceBlockOccurred) / timeForBlockToFallOneField
         if key == 'down':
+            position = (position[0], position[1] + 1)
             howManyDownsShouldBe += 1
             if howManyDownsAre < howManyDownsShouldBe:
-                time.sleep((timeForBlockToFallOneField * howManyDownsShouldBe) - (time.time() - timeSinceBlockOccured) )
+                timeToSleep = (timeForBlockToFallOneField * howManyDownsShouldBe) - (time.time() - timeSinceBlockOccurred) - 0.1
+                if timeToSleep > 0:
+                    time.sleep(timeToSleep)
 
-        else:
+        elif key == 'up':
             gui.typewrite([key])
-            time.sleep(0.1)
+            time.sleep(0.2)
+        else:
+            if key == 'right':
+                position = (position[0] + 1, position[1])
+            else:  # left
+                position = (position[0] - 1, position[1])
+            if blockPossibleInPosition(block, (position[0], position[1] - 1), gameMap.map()):
+                print('+')
+                gui.typewrite([key])
+                time.sleep(0.2)
+            else:
+                print('-')
+                gui.keyDown(key)
+                time.sleep(0.3)
+                gui.keyUp(key)
+                time.sleep((0.1))
+
         print(key)
     print("stop")
     return howManyDownsShouldBe

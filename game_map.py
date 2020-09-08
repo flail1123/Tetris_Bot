@@ -12,7 +12,8 @@ def positionInsideMap(position):
 
 def blockPossibleInPosition(block, position, map):
     for (x, y) in block.currentComponentParts():
-        if (not (correctPosition((position[0] + x, position[1] + y)))) or (position[1] + y >= 0 and map[position[0] + x][position[1] + y] == 1) or position[0] + x == 9:
+        if (not (correctPosition((position[0] + x, position[1] + y)))) or (
+                position[1] + y >= 0 and map[position[0] + x][position[1] + y] == 1) or position[0] + x == 9:
             return False
     return True
 
@@ -25,7 +26,8 @@ def dfs(position, block, visited, gradesFromCurrentBlock, map):
     directions = [(1, 0), (-1, 0), (0, 1)]  # block can go down, left or right
     for direction in directions:
         newPosition = (position[0] + direction[0], position[1] + direction[1])
-        if positionInsideMap(newPosition) and not visited[newPosition[0]][newPosition[1]] and blockPossibleInPosition(block, newPosition, map):
+        if positionInsideMap(newPosition) and not visited[newPosition[0]][newPosition[1]] and blockPossibleInPosition(
+                block, newPosition, map):
             dfs(newPosition, block, visited, gradesFromCurrentBlock, map)
 
 
@@ -38,28 +40,28 @@ def printMap(map):
 
 
 class GameMap:
-    def calculateGrade(self):
-        #print(self)
+    def calculateAccessibility(self):
+        # print(self)
         grades = [[0 for j in range(18)] for i in range(10)]
         # test every block
         for i in range(1, 8):
-            #print('number:', i)
+            # print('number:', i)
             block = Block(i)
             # and every rotation
             for rotation in block.rotations():
-                #print('rotation: ', rotation)
+                # print('rotation: ', rotation)
                 block.currentRotation = rotation
                 visited = [[False for j in range(18)] for i in range(10)]
                 gradesFromCurrentBlock = [[0 for j in range(18)] for i in range(10)]
                 dfs((block.position()), block, visited, gradesFromCurrentBlock, self.__map)
-                #printMap(gradesFromCurrentBlock)
+                # printMap(gradesFromCurrentBlock)
                 # add grades from this block to grades
                 for x in range(10):
                     for y in range(18):
                         grades[x][y] += gradesFromCurrentBlock[x][y]
-                #printMap(visited)
-                #print("------------------")
-            #print('++++++++++++++++++++++++++++')
+                # printMap(visited)
+                # print("------------------")
+            # print('++++++++++++++++++++++++++++')
         for x in range(10):
             for y in range(18):
                 # high places should be discouraged
@@ -71,7 +73,7 @@ class GameMap:
                 # if grade of field is 0, so no block can access field, it should be punished by -20
                 if grades[x][y] == 0:
                     grades[x][y] += -20
-        #printMap(grades)
+        # printMap(grades)
         sumOfGrades = 0
         numberOfFields = 0
         for x in range(10):
@@ -79,8 +81,28 @@ class GameMap:
                 if self.__map[x][y] == 2:
                     sumOfGrades += grades[x][y]
                     numberOfFields += 1
-        self.__grade = sumOfGrades / numberOfFields
-        #print(90 * "*")
+        #print(sumOfGrades / numberOfFields)
+        return sumOfGrades / numberOfFields
+
+    def calculateAverageDensity(self):
+        # calculates weighted average of density of rows in terms of fields with and without blocks
+        weights = [i / 10 for i in range(10, 25)] + [2.6, 2.8, 3.0]
+        numberOfOccupiedFieldsInMap = 0
+        sumOfWeightsOfNotEmptyRows = 0
+        for y in range(0, 18):
+            numberOfOccupiedFieldsInRow = sum([(self.__map[x][y] == 1) for x in range(0, 10)])
+            if numberOfOccupiedFieldsInRow > 0:
+                sumOfWeightsOfNotEmptyRows += weights[y]
+            numberOfOccupiedFieldsInMap += numberOfOccupiedFieldsInRow * weights[y]
+        if sumOfWeightsOfNotEmptyRows == 0:
+            return 0
+        #print(numberOfOccupiedFieldsInMap, sumOfWeightsOfNotEmptyRows)
+        #print(numberOfOccupiedFieldsInMap/sumOfWeightsOfNotEmptyRows)
+        return numberOfOccupiedFieldsInMap/sumOfWeightsOfNotEmptyRows
+
+    def calculateGrade(self):
+
+        self.__grade = self.calculateAccessibility() + self.calculateAverageDensity()
 
     def __init__(self, oldGameMap=None):
         self.__map = [[0 for j in range(18)] for i in range(10)]
@@ -142,11 +164,11 @@ class GameMap:
         for (x, y) in block.currentComponentParts():
             if positionInsideMap((position[0] + x, position[1] + y)):
                 self.__map[position[0] + x][position[1] + y] = 1
-        #print(self)
+        # print(self)
         self.clearFullLines()
-        #print(self)
+        # print(self)
         self.calculateWhere2s()
-        #print(self)
+        # print(self)
 
         self.calculateGrade()
 
@@ -159,14 +181,14 @@ class GameMap:
         return string
 
 
-
 '''
 
 gameMap = GameMap()
-block = Block(6)
+block = Block(7)
 block.currentRotation = 0
 gameMap.addBlock(block, (0, 16))
 print(gameMap, gameMap.grade())
+
 
 gameMap = GameMap()
 block = Block(6)
