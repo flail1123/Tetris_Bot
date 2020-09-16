@@ -39,14 +39,13 @@ def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOn
             if blockPossibleInPosition(block, (position[0], position[1] - 1), gameMap.map()):
                 print('+')
                 gui.typewrite([key])
-                time.sleep(0.2)
+                time.sleep(0.10)
             else:
                 print('-')
                 gui.keyDown(key)
                 time.sleep(0.3)
                 gui.keyUp(key)
-                time.sleep((0.1))
-
-        print(key)
+                time.sleep((0.05))
+        print(key, position)
     print("stop")
     return howManyDownsShouldBe

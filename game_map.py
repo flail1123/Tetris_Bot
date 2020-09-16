@@ -13,7 +13,7 @@ def positionInsideMap(position):
 def blockPossibleInPosition(block, position, map):
     for (x, y) in block.currentComponentParts():
         if (not (correctPosition((position[0] + x, position[1] + y)))) or (
-                position[1] + y >= 0 and map[position[0] + x][position[1] + y] == 1) or position[0] + x == 9:
+                position[1] + y >= 0 and map[position[0] + x][position[1] + y] == 1):
             return False
     return True
 
@@ -39,9 +39,62 @@ def printMap(map):
     print('-=---=')
 
 
+def newPosition(position, direction):
+    x, y = position
+    if direction == 'right':
+        return (x + 1, y)
+    if direction == 'left':
+        return (x - 1, y)
+    if direction == 'down':
+        return (x, y + 1)
+    if direction == 'up':
+        return (x, y - 1)
+
+
+def turnRight(direction):
+    if direction == 'right':
+        return 'down'
+    if direction == 'left':
+        return 'up'
+    if direction == 'down':
+        return 'left'
+    if direction == 'up':
+        return 'right'
+
+
+def turnLeft(direction):
+    if direction == 'right':
+        return 'up'
+    if direction == 'left':
+        return 'down'
+    if direction == 'down':
+        return 'right'
+    if direction == 'up':
+        return 'left'
+
+
+def dfsIrregularity(position, direction, map):
+    print(position, direction)
+    x, y = position
+    if x == 9 and direction == 'right':
+        return 1
+
+    x1, y1 = newPosition(position, direction)
+    if correctPosition((x1, y1)) and map[x1][y1] != 1:
+        positionOnRight = newPosition((x1, y1), turnRight(direction))
+        if correctPosition(positionOnRight) and map[positionOnRight[0]][positionOnRight[1]] != 1:
+            # print('1')
+            return 1 + dfsIrregularity(positionOnRight, turnRight(direction), map)
+        else:
+            # print('2')
+            return 1 + dfsIrregularity((x1, y1), direction, map)
+    else:
+        # print('3')
+        return 1 + dfsIrregularity(position, turnLeft(direction), map)
+
+
 class GameMap:
-    def calculateAccessibility(self):
-        # print(self)
+    def calculateGrades(self):
         grades = [[0 for j in range(18)] for i in range(10)]
         # test every block
         for i in range(1, 8):
@@ -62,47 +115,71 @@ class GameMap:
                 # printMap(visited)
                 # print("------------------")
             # print('++++++++++++++++++++++++++++')
+        return grades
+
+    def calculateAccessibility(self):
+        # print(self)
+        grades = self.calculateGrades()
         for x in range(10):
             for y in range(18):
-                # high places should be discouraged
-                if y <= 12:
-                    grades[x][y] -= 1
-                if y <= 5:
-                    grades[x][y] -= 1
-
-                # if grade of field is 0, so no block can access field, it should be punished by -20
+                # if grade of field is 0, so no block can access field, it should be punished by -100
                 if grades[x][y] == 0:
-                    grades[x][y] += -20
+                    grades[x][y] += -100
         # printMap(grades)
         sumOfGrades = 0
         numberOfFields = 0
         for x in range(10):
             for y in range(18):
-                if self.__map[x][y] == 2:
+                if self.__map[x][y] == 1:
+                    sumOfGrades += 19
+                else:
                     sumOfGrades += grades[x][y]
-                    numberOfFields += 1
-        #print(sumOfGrades / numberOfFields)
+                numberOfFields += 1
+        # print(sumOfGrades / numberOfFields, "----")
         return sumOfGrades / numberOfFields
 
-    def calculateAverageDensity(self):
-        # calculates weighted average of density of rows in terms of fields with and without blocks
-        weights = [i / 10 for i in range(10, 25)] + [2.6, 2.8, 3.0]
-        numberOfOccupiedFieldsInMap = 0
-        sumOfWeightsOfNotEmptyRows = 0
+    def calculateDensity(self):
+        # calculates average number of row that occupied field is in
+        sumOfRows = 0
+        numberOfOccupiedFieldsOnMap = 0
         for y in range(0, 18):
             numberOfOccupiedFieldsInRow = sum([(self.__map[x][y] == 1) for x in range(0, 10)])
-            if numberOfOccupiedFieldsInRow > 0:
-                sumOfWeightsOfNotEmptyRows += weights[y]
-            numberOfOccupiedFieldsInMap += numberOfOccupiedFieldsInRow * weights[y]
-        if sumOfWeightsOfNotEmptyRows == 0:
-            return 0
-        #print(numberOfOccupiedFieldsInMap, sumOfWeightsOfNotEmptyRows)
-        #print(numberOfOccupiedFieldsInMap/sumOfWeightsOfNotEmptyRows)
-        return numberOfOccupiedFieldsInMap/sumOfWeightsOfNotEmptyRows
+            sumOfRows += numberOfOccupiedFieldsInRow * y
+            numberOfOccupiedFieldsOnMap += numberOfOccupiedFieldsInRow
+        # print(sumOfRows / numberOfOccupiedFieldsOnMap, "+++")
+        return sumOfRows / numberOfOccupiedFieldsOnMap
+
+    def calculateIrregularity(self):
+        # returns length of a that ......
+        position = (0, 17)
+        for y in range(0, 18):
+            if self.__map[0][y] == 1:
+                position = (0, y - 1)
+                break
+        direction = 'right'
+        print(self, position, direction)
+        length = dfsIrregularity(position, direction, self.__map)
+        # print(length)
+        return length
+
+    def calculateRightColumnPenalty(self):
+        result = 0
+        for y in range(0, 18):
+            if self.__map[9][y] == 1:
+                result += 1
+        # print(result)
+        return result
+
+    def calculateNumberOfOccupiedFields(self):
+        result = 0
+        for x in range(0, 10):
+            for y in range(0, 18):
+                result += self.__map[x][y]
+        return result
 
     def calculateGrade(self):
-
-        self.__grade = self.calculateAccessibility() + self.calculateAverageDensity()
+        self.__grade = 10 * (self.calculateAccessibility() - 17) + (1 / 2) * self.calculateDensity() - (
+                self.calculateIrregularity() - 5) - 2 * self.calculateRightColumnPenalty() + self.calculateNumberOfOccupiedFields()
 
     def __init__(self, oldGameMap=None):
         self.__map = [[0 for j in range(18)] for i in range(10)]
@@ -114,7 +191,7 @@ class GameMap:
                 for y in range(18):
                     self.__map[x][y] = oldGameMap.map()[x][y]
         if oldGameMap is None:
-            self.__grade = 161 / 9
+            self.__grade = 0
         else:
             self.__grade = oldGameMap.grade()
 
@@ -126,20 +203,22 @@ class GameMap:
 
     def calculateWhere2s(self):
         # erase old 2s
-        for x in range(9):  # last column isn't interesting
+        for x in range(10):
             for y in range(18):
                 if self.__map[x][y] == 2:
                     self.__map[x][y] = 0
-        for x in range(9):  # last column isn't interesting
+        for x in range(10):
             for y in range(18):
                 if self.__map[x][y] != 1:
                     if y == 17:
                         self.__map[x][y] = 2
                     else:
-                        directions = [(1, 0), (0, -1), (-1, 0), (0, 1)]
-                        for direction in directions:
-                            if positionInsideMap((x + direction[0], y + direction[1])) and self.__map[x][y + 1] == 1:
-                                self.__map[x][y] = 2
+                        # 2 should be in field if there is block under field or blocks\wall are on both left and right
+                        if self.__map[x][y + 1] == 1 or (((positionInsideMap((x + 1, y)) and self.__map[x + 1][
+                            y] == 1) or not positionInsideMap((x + 1, y))) \
+                                                         and ((positionInsideMap((x - 1, y)) and self.__map[x - 1][
+                                    y] == 1) or not positionInsideMap((x - 1, y)))):
+                            self.__map[x][y] = 2
 
     def clearFullLines(self):
         for y in range(18):
@@ -169,7 +248,6 @@ class GameMap:
         # print(self)
         self.calculateWhere2s()
         # print(self)
-
         self.calculateGrade()
 
     def __str__(self):
@@ -180,21 +258,27 @@ class GameMap:
             string += '\n'
         return string
 
+    def howManyFieldsAreOccupied(self):
+        result = 0
+        for y in range(18):
+            for x in range(10):
+                result += self.__map[x][y] == 1
+        return result
+
 
 '''
 
 gameMap = GameMap()
-block = Block(7)
-block.currentRotation = 0
-gameMap.addBlock(block, (0, 16))
-print(gameMap, gameMap.grade())
-
-
-gameMap = GameMap()
 block = Block(6)
 block.currentRotation = 0
-gameMap.addBlock(block, (1, 16))
+gameMap.addBlock(block, (6, 16))
 print(gameMap, gameMap.grade())
+
+
+block = Block(6)
+gameMap.addBlock(block, (0, 14))
+print(gameMap, gameMap.grade())
+
 
 gameMap = GameMap()
 block = Block(6)

@@ -54,14 +54,16 @@ def startGame():
 timesForBlocksToFallOneFieldDependingOnLevel = [0, 8.85 / 16]
 
 nextBlock = None
-
+gameOver = False
 
 def determineNextBlock():
-    global nextBlock
-    time.sleep(0.7)
-    nextBlock = Block(whichBlockIsNext())
-    print("next block: ", nextBlock.number())
-
+    try:
+        global nextBlock
+        time.sleep(1)
+        nextBlock = Block(whichBlockIsNext())
+    except NoBlockHasBeenFound:
+        global gameOver
+        gameOver = True
 
 def play(level):
     global nextBlock
@@ -92,23 +94,34 @@ def play(level):
         currentBlock = nextBlock
         threadObj = threading.Thread(target=determineNextBlock)
         threadObj.start()
+        howManyFieldsAreOccupied = gameMap.howManyFieldsAreOccupied()
         try:
             # calculates where and how to put block
             gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
         except GameOver:
             break
-        time.sleep(0.3)
+        time.sleep(0.4)
         if currentBlock.number() == 7:
-            time.sleep(0.3)
+            time.sleep(0.2)
         print(currentBlock.currentRotation)
         # puts block in the position in the game
+        if gameOver:
+            break
         howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock)
-        timeToSleep = (timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime)
+        if gameOver:
+            break
+        timeToSleep = (timeForBlockToFallOneField * howManyDown + 0.6) - (time.time() - currentTime)
         if timeToSleep > 0:
             time.sleep(timeToSleep)
+        # if some lines were cleared time has to be added
+        if howManyFieldsAreOccupied > gameMap.howManyFieldsAreOccupied():
+            time.sleep(0.35)
         threadObj.join()
+        print("next block: ", nextBlock.number())
         print('done', nr)
         print(gameMap)
+        if gameOver:
+            break
 
     print('Game Over!')
 
