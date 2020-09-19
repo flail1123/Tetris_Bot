@@ -74,7 +74,7 @@ def turnLeft(direction):
 
 
 def dfsIrregularity(position, direction, map):
-    print(position, direction)
+    #print(position, direction)
     x, y = position
     if x == 9 and direction == 'right':
         return 1
@@ -157,7 +157,7 @@ class GameMap:
                 position = (0, y - 1)
                 break
         direction = 'right'
-        print(self, position, direction)
+        # print(self, position, direction)
         length = dfsIrregularity(position, direction, self.__map)
         # print(length)
         return length
@@ -178,8 +178,8 @@ class GameMap:
         return result
 
     def calculateGrade(self):
-        self.__grade = 10 * (self.calculateAccessibility() - 17) + (1 / 2) * self.calculateDensity() - (
-                self.calculateIrregularity() - 5) - 2 * self.calculateRightColumnPenalty() + self.calculateNumberOfOccupiedFields()
+        self.__grade = 10 * (self.calculateAccessibility() - 17) + (3/4) * self.calculateDensity() - (
+                self.calculateIrregularity() - 5) - 2 * self.calculateRightColumnPenalty() + (1/2) * self.calculateNumberOfOccupiedFields()
 
     def __init__(self, oldGameMap=None):
         self.__map = [[0 for j in range(18)] for i in range(10)]

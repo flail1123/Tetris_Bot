@@ -14,11 +14,11 @@ def letterToKeyName(letter):
         return 'right'
 
 
-def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOneField, gameMap, block):
+def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOneField, gameMap, block, differenceInXAxis):
     print("start")
-    position = block.position()
+    position = (block.position()[0] + differenceInXAxis, block.position()[1])
     howManyDownsShouldBe = 0
-    for key in [letterToKeyName(letter) for letter in listOfSteps]:
+    for i, key in enumerate([letterToKeyName(letter) for letter in listOfSteps]):
         howManyDownsAre = (time.time() - timeSinceBlockOccurred) / timeForBlockToFallOneField
         if key == 'down':
             position = (position[0], position[1] + 1)

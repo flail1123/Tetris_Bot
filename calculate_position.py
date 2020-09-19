@@ -122,9 +122,10 @@ def doTetrisMove(gameMap, block):
         if gameMap.map()[9][y] == 1:
             start = y - 1
             break
-    gameMap.addBlock(block, (9, start))
+    print("start", start)
+    gameMap.addBlock(block, (9, start - 2))
     listOfMoves = ['u', 'r', 'r', 'r', 'r', 'r'] + (start - 2) * ['d']
-    place = (9, start)
+    place = (9, start - 2)
     return gameMap, listOfMoves, place
 
 
