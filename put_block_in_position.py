@@ -15,7 +15,6 @@ def letterToKeyName(letter):
 
 
 def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOneField, gameMap, block, differenceInXAxis):
-    print("start")
     position = (block.position()[0] + differenceInXAxis, block.position()[1])
     howManyDownsShouldBe = 0
     for i, key in enumerate([letterToKeyName(letter) for letter in listOfSteps]):
@@ -24,28 +23,25 @@ def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOn
             position = (position[0], position[1] + 1)
             howManyDownsShouldBe += 1
             if howManyDownsAre < howManyDownsShouldBe:
-                timeToSleep = (timeForBlockToFallOneField * howManyDownsShouldBe) - (time.time() - timeSinceBlockOccurred) - 0.1
+                timeToSleep = (timeForBlockToFallOneField * howManyDownsShouldBe) - (time.time() - timeSinceBlockOccurred) - timeForBlockToFallOneField / 5.5
                 if timeToSleep > 0:
                     time.sleep(timeToSleep)
 
         elif key == 'up':
             gui.typewrite([key])
-            time.sleep(0.2)
+            time.sleep(timeForBlockToFallOneField / 2.7)
         else:
             if key == 'right':
                 position = (position[0] + 1, position[1])
             else:  # left
                 position = (position[0] - 1, position[1])
             if blockPossibleInPosition(block, (position[0], position[1] - 1), gameMap.map()):
-                print('+')
                 gui.typewrite([key])
-                time.sleep(0.10)
+                time.sleep(timeForBlockToFallOneField / 5.5)
             else:
-                print('-')
                 gui.keyDown(key)
-                time.sleep(0.3)
+                time.sleep(timeForBlockToFallOneField / 1.85)
                 gui.keyUp(key)
-                time.sleep((0.05))
+                time.sleep(timeForBlockToFallOneField / 11)
         print(key, position)
-    print("stop")
     return howManyDownsShouldBe

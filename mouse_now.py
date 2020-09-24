@@ -8,8 +8,4 @@ try:
 except KeyboardInterrupt:
     print('Done\n')
 
-'''
-X:  589 Y:  197 left up corner
-X:  718 Y:  271 play game
-X:  734 Y:  374 level
-'''
+
