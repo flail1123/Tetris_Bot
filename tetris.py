@@ -50,31 +50,39 @@ def startGame():
         gui.click(left + width // 2, top + height // 2)
     # determine positionOfLeftUpCorner variable
     positionOfLeftUpCorner = (left - 140, top - 171)
-    print(positionOfLeftUpCorner)
+    #print(positionOfLeftUpCorner)
     # start game
     left, top, width, height = gui.locateOnScreen('play_game.png')
     gui.click(left + width // 2, top + height // 2)
 
 
-timesForBlocksToFallOneFieldDependingOnLevel = [0, 8.85 / 16, 8.00 / 16, 7.47 / 16, 6.53 / 16]
+timesForBlocksToFallWholeMapFieldDependingOnLevel = [0, 8.85, 8.00, 7.47, 6.53, 5.62, 4.84, 4.12, 3.31, 2.52, 1.59]
 
 
-def adjustLevel(screenShot):
-    a, b, c = screenShot.getpixel((positionOfLeftUpCorner[0] + 611, positionOfLeftUpCorner[1] + 203))
-    if a == 220 and b == 237 and c == 255:
-        return 2
-    a, b, c = screenShot.getpixel((positionOfLeftUpCorner[0] + 606, positionOfLeftUpCorner[1] + 198))
-    if a == 220 and b == 237 and c == 255:
+def whatLevelIsNow(screenShot):
+    # returns number of level that it is now
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 605, positionOfLeftUpCorner[1] + 183)) == (220, 237, 255):
         return 1
-    a, b, c = screenShot.getpixel((positionOfLeftUpCorner[0] + 608, positionOfLeftUpCorner[1] + 202))
-    if a == 220 and b == 237 and c == 255:
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 613, positionOfLeftUpCorner[1] + 203)) == (220, 237, 255):
+        return 2
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 604, positionOfLeftUpCorner[1] + 193)) == (220, 237, 255):
         return 3
-    return 4
-
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 608, positionOfLeftUpCorner[1] + 182)) == (220, 237, 255):
+        return 4
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 612, positionOfLeftUpCorner[1] + 189)) == (220, 237, 255):
+        return 5
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 612, positionOfLeftUpCorner[1] + 193)) == (220, 237, 255):
+        return 6
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 604, positionOfLeftUpCorner[1] + 197)) == (220, 237, 255):
+        return 7
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 604, positionOfLeftUpCorner[1] + 200)) == (220, 237, 255):
+        return 9
+    if screenShot.getpixel((positionOfLeftUpCorner[0] + 608, positionOfLeftUpCorner[1] + 196)) == (220, 237, 255):
+        return 10
+    return 8
 
 def play(level):
-    points = 0
-    timeForBlockToFallOneField = timesForBlocksToFallOneFieldDependingOnLevel[level]
+    timeForBlockToFallOneField = timesForBlocksToFallWholeMapFieldDependingOnLevel[level] / 16
     gameMap = GameMap()
     # tries finding what is the first block
     while True:
@@ -86,47 +94,52 @@ def play(level):
             pass
     time.sleep(1.9)
     # game has started
-    print("game started")
+    #print("game started")
     currentTime = time.time()
-    gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
+    gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock, level)
     lastMoveOfPreviousBlock = listOfSteps[-1]
-    print('screenShot')
+    #print('screenShot')
     screenShot = gui.screenshot()
-    print(adjustLevel(screenShot), ' level')
+    #print(whatLevelIsNow((screenShot), ' level')
     nextBlock = Block(whichBlockIsNext(screenShot))
     howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock, 0)
-    nr = 0
-    print('done', nr)
+    #nr = 0
+    #print('done', nr)
     time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime))
-    print(gameMap)
+    #print(gameMap)
     while True:
-        nr += 1
-        print("start", nr, nextBlock.number())
+        #nr += 1
+        #print("start", nr, nextBlock.number())
         currentTime = time.time()
         currentBlock = nextBlock
         howManyFieldsAreOccupied = gameMap.calculateNumberOfOccupiedFields()
+        # copy current map
         oldMap = [[0 for j in range(18)] for i in range(10)]
         for x in range(0, 10):
             for y in range(0, 18):
                 oldMap[x][y] = gameMap.map()[x][y]
         try:
             # calculates where and how to put block
-            gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock)
+            gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock, level)
         except GameOver:
             break
-        print(gameMap.grade(), 'grade')
+        #print(gameMap.grade(), 'grade')
+        # waits to be sure block has appeared, in most cases block number 7 appears faster
         if currentBlock.number() == 7:
-            time.sleep(0.2)
+            time.sleep(timeForBlockToFallOneField / 2.8)
         else:
-            time.sleep(0.4)
+            time.sleep(timeForBlockToFallOneField / 1.4)
         waitForRoundTime(currentTime, timeForBlockToFallOneField)
-        print('screenShot')
-        startTime = time.time()
+        #print(time.time() - currentTime, currentTime)
+        #print('screenShot')
         screenShot = gui.screenshot()
-        screenShot.save("block" + str(currentBlock.number()) + ".jpg")
+        startTime = time.time()
+        #screenShot.save('block' + str(nr) + '.jpg')
+        # takes screenshot and changes currentTime so it reflects where the block really is
         currentTime, extraSteps, differenceInXAxis = adjustTime(startTime, currentTime, currentBlock, oldMap,
                                                                 positionOfLeftUpCorner, timeForBlockToFallOneField,
                                                                 screenShot, lastMoveOfPreviousBlock)
+        #print(currentTime)
         listOfSteps = extraSteps + listOfSteps
         lastMoveOfPreviousBlock = listOfSteps[-1]
         try:
@@ -139,27 +152,26 @@ def play(level):
         howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock,
                                          differenceInXAxis)
 
-        timeToSleep = (timeForBlockToFallOneField * howManyDown + 0.4) - (time.time() - currentTime)
+        timeToSleep = (timeForBlockToFallOneField * howManyDown + timeForBlockToFallOneField / 1.4) - (time.time() - currentTime)
         if timeToSleep > 0:
             time.sleep(timeToSleep)
 
-        linesCleared = (howManyFieldsAreOccupied - gameMap.calculateNumberOfOccupiedFields()) / 9
+        linesCleared = (howManyFieldsAreOccupied - gameMap.calculateNumberOfOccupiedFields()) // 9
         # if some lines were cleared it has to be looked if level has changed
         if linesCleared:
-            newLevel = adjustLevel(screenShot)
-            print(newLevel, 'newLevel')
+            newLevel = whatLevelIsNow(screenShot)
+            #print(newLevel, 'newLevel')
             if newLevel != level:
                 level = newLevel
-                timeForBlockToFallOneField = timesForBlocksToFallOneFieldDependingOnLevel[level]
+                timeForBlockToFallOneField = timesForBlocksToFallWholeMapFieldDependingOnLevel[level] / 16
 
-        print("next block: ", nextBlock.number())
-        print('done', nr)
-        print(gameMap)
+        #print("next block: ", nextBlock.number())
+        #print('done', nr)
+        #print(gameMap)
 
     print('Game Over!')
 
 
-# level = int(input('Level: '))
-level = 3
+level = int(input('Level: '))
 startGame()
 play(level)

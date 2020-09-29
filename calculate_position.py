@@ -67,7 +67,7 @@ def findPossiblePlacesForBlock(gameMap, block):
     return result
 
 
-def calculatePositionKnowingRotation(gameMap, block):
+def calculatePositionKnowingRotation(gameMap, block, level):
     # calculates best place to put block knowing it's position
 
     # list in format [((x1, y1), listOfMoves1), ((x2, y2), listOfMoves2), ...] where first argument is possible place
@@ -76,7 +76,7 @@ def calculatePositionKnowingRotation(gameMap, block):
     results = []
     for (place, listOfMoves) in listOfPossiblePlacesForBlockWithMoves:
         newGameMap = GameMap(oldGameMap=gameMap)
-        newGameMap.addBlock(block, place)
+        newGameMap.addBlock(block, place, level)
         results.append((newGameMap, listOfMoves, place))
     # if there is no place where block can be found exception should be raised
     if not results:
@@ -100,7 +100,7 @@ def isTetrisMoveWorthwhile(gameMap):
         return False
 
     grades = gameMap.calculateAccessibilityOfFields()
-    print(grades, start, 'tetris')
+    #print(grades, start, 'tetris')
     for y in range(start - 3, start + 1):
         for x in range(0, 9):
             if grades[x][y] != 0:
@@ -108,30 +108,30 @@ def isTetrisMoveWorthwhile(gameMap):
     return True
 
 
-def doTetrisMove(gameMap, block):
+def doTetrisMove(gameMap, block, level):
     start = 17
     for y in range(0, 18):
         if gameMap.map()[9][y] == 1:
             start = y - 1
             break
-    gameMap.addBlock(block, (9, start - 2))
+    gameMap.addBlock(block, (9, start - 2), level)
     listOfMoves = ['u', 'r', 'r', 'r', 'r', 'r'] + (start - 2) * ['d']
     place = (9, start - 2)
     return gameMap, listOfMoves, place
 
 
-def calculatePosition(gameMap, block):
+def calculatePosition(gameMap, block, level):
     # if it is possible tetris move is always the best option
     if block.number() == 1 and isTetrisMoveWorthwhile(gameMap):
         block.currentRotation = 90
-        return doTetrisMove(gameMap, block)
+        return doTetrisMove(gameMap, block, level)
 
     listOfResults = []
-    #all rotations of blocks are tried
+    # all rotations of blocks are tried
     for rotation in block.rotations():
         block.currentRotation = rotation
         try:
-            newGameMap, listOfMoves, place = calculatePositionKnowingRotation(gameMap, block)
+            newGameMap, listOfMoves, place = calculatePositionKnowingRotation(gameMap, block, level)
             listOfResults.append((newGameMap, listOfMoves, place))
         except NoPlaceFound:
             pass
