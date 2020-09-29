@@ -51,5 +51,4 @@ def putBlockInPosition(listOfSteps, timeSinceBlockOccurred, timeForBlockToFallOn
                 time.sleep(timeForBlockToFallOneField / 1.85)
                 gui.keyUp(key)
                 time.sleep(timeForBlockToFallOneField / 11)
-        # print(key, position)
     return howManyDownsShouldBe

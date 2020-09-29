@@ -1,7 +1,6 @@
 from block import Block
 
 
-
 def correctPosition(position):
     # y coordinate can be negative (at first position after rotation often is)
     return 0 <= position[0] < 10 and position[1] < 18
@@ -33,12 +32,6 @@ def dfsAccessibility(position, block, visited, gradesFromCurrentBlock, map):
                 block, newPosition, map):
             dfsAccessibility(newPosition, block, visited, gradesFromCurrentBlock, map)
 
-def printMap(map):
-    for y in range(18):
-        for x in range(10):
-            print(map[x][y], end=' ')
-        print('')
-    print('-=---=')
 
 def newPosition(position, direction):
     x, y = position
@@ -163,7 +156,6 @@ class GameMap:
                 position = (0, y - 1)
                 break
         direction = 'right'
-        #print(self, "dfs Irregularity")
         length = dfsIrregularity(position, direction, self.__map)
         return length
 
@@ -196,7 +188,7 @@ class GameMap:
 
     def __init__(self, oldGameMap=None):
         self.__map = [[0 for j in range(18)] for i in range(10)]
-        if oldGameMap != None:
+        if oldGameMap is not None:
             for x in range(10):
                 for y in range(18):
                     self.__map[x][y] = oldGameMap.map()[x][y]

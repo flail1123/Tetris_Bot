@@ -50,7 +50,6 @@ def startGame():
         gui.click(left + width // 2, top + height // 2)
     # determine positionOfLeftUpCorner variable
     positionOfLeftUpCorner = (left - 140, top - 171)
-    #print(positionOfLeftUpCorner)
     # start game
     left, top, width, height = gui.locateOnScreen('play_game.png')
     gui.click(left + width // 2, top + height // 2)
@@ -81,6 +80,7 @@ def whatLevelIsNow(screenShot):
         return 10
     return 8
 
+
 def play(level):
     timeForBlockToFallOneField = timesForBlocksToFallWholeMapFieldDependingOnLevel[level] / 16
     gameMap = GameMap()
@@ -94,22 +94,14 @@ def play(level):
             pass
     time.sleep(1.9)
     # game has started
-    #print("game started")
     currentTime = time.time()
     gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock, level)
     lastMoveOfPreviousBlock = listOfSteps[-1]
-    #print('screenShot')
     screenShot = gui.screenshot()
-    #print(whatLevelIsNow((screenShot), ' level')
     nextBlock = Block(whichBlockIsNext(screenShot))
     howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock, 0)
-    #nr = 0
-    #print('done', nr)
     time.sleep((timeForBlockToFallOneField * (howManyDown + 1)) - (time.time() - currentTime))
-    #print(gameMap)
     while True:
-        #nr += 1
-        #print("start", nr, nextBlock.number())
         currentTime = time.time()
         currentBlock = nextBlock
         howManyFieldsAreOccupied = gameMap.calculateNumberOfOccupiedFields()
@@ -123,23 +115,18 @@ def play(level):
             gameMap, listOfSteps, place = calculatePosition(gameMap, currentBlock, level)
         except GameOver:
             break
-        #print(gameMap.grade(), 'grade')
         # waits to be sure block has appeared, in most cases block number 7 appears faster
         if currentBlock.number() == 7:
             time.sleep(timeForBlockToFallOneField / 2.8)
         else:
             time.sleep(timeForBlockToFallOneField / 1.4)
         waitForRoundTime(currentTime, timeForBlockToFallOneField)
-        #print(time.time() - currentTime, currentTime)
-        #print('screenShot')
         screenShot = gui.screenshot()
         startTime = time.time()
-        #screenShot.save('block' + str(nr) + '.jpg')
         # takes screenshot and changes currentTime so it reflects where the block really is
         currentTime, extraSteps, differenceInXAxis = adjustTime(startTime, currentTime, currentBlock, oldMap,
                                                                 positionOfLeftUpCorner, timeForBlockToFallOneField,
                                                                 screenShot, lastMoveOfPreviousBlock)
-        #print(currentTime)
         listOfSteps = extraSteps + listOfSteps
         lastMoveOfPreviousBlock = listOfSteps[-1]
         try:
@@ -152,7 +139,8 @@ def play(level):
         howManyDown = putBlockInPosition(listOfSteps, currentTime, timeForBlockToFallOneField, gameMap, currentBlock,
                                          differenceInXAxis)
 
-        timeToSleep = (timeForBlockToFallOneField * howManyDown + timeForBlockToFallOneField / 1.4) - (time.time() - currentTime)
+        timeToSleep = (timeForBlockToFallOneField * howManyDown + timeForBlockToFallOneField / 1.4) - (
+                    time.time() - currentTime)
         if timeToSleep > 0:
             time.sleep(timeToSleep)
 
@@ -160,18 +148,13 @@ def play(level):
         # if some lines were cleared it has to be looked if level has changed
         if linesCleared:
             newLevel = whatLevelIsNow(screenShot)
-            #print(newLevel, 'newLevel')
             if newLevel != level:
                 level = newLevel
                 timeForBlockToFallOneField = timesForBlocksToFallWholeMapFieldDependingOnLevel[level] / 16
 
-        #print("next block: ", nextBlock.number())
-        #print('done', nr)
-        #print(gameMap)
-
     print('Game Over!')
 
-
+print("Type level that should be played, new tab in the browser will open, you can skip ad, after that you can't touch mouse or keybord, now you can watch magic happen.")
 level = int(input('Level: '))
 startGame()
 play(level)

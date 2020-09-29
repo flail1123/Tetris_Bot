@@ -100,7 +100,6 @@ def isTetrisMoveWorthwhile(gameMap):
         return False
 
     grades = gameMap.calculateAccessibilityOfFields()
-    #print(grades, start, 'tetris')
     for y in range(start - 3, start + 1):
         for x in range(0, 9):
             if grades[x][y] != 0:

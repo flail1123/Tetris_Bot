@@ -37,12 +37,10 @@ def adjustTime(startTime, currentTime, block, oldMap, positionOfLeftUpCorner, ti
         isStillAChanceThatThisFieldIsTheMainOne = True
         for part in block.currentComponentParts():
             if not ((field[0] + part[0], field[1] + part[1]) in blocksFields):
-                #print(field, part)
                 isStillAChanceThatThisFieldIsTheMainOne = False
                 break
         if isStillAChanceThatThisFieldIsTheMainOne:
             theMainField = field
-    #print(theMainField, 'theMainField')
 
     # not currentTime has to be changed so it reflects where the block really is
     howMuchDownBlockIs = theMainField[1] - block.position()[1]
