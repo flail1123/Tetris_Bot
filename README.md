@@ -1,5 +1,5 @@
 # Tetris_Bot
-To use:
+How to run:
 ```
 git clone https://github.com/flail1123/Tetris_Bot.git
 cd Tetris_Bot
